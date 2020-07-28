@@ -1,0 +1,29 @@
+{
+  "name": "honegumi-sync",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "prepublish": "tsc",
+  "repository": {
+    "url": "https://github.com/brendanmckenzie/honegumi-sync"
+  },
+  "bugs": {
+    "url": "https://github.com/brendanmckenzie/honegumi-sync/issues"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.1.0",
+    "graphql": "^15.3.0",
+    "sqlite3": "^5.0.0",
+    "subscriptions-transport-ws": "^0.9.17",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.7"
+  },
+  "devDependencies": {
+    "@types/sqlite3": "^3.1.6"
+  }
+}
