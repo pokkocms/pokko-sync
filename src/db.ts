@@ -3,16 +3,19 @@ import path from "path";
 
 const dbMap = new Map<string, sqlite3.Database>();
 
-const dbPath = (project: string): string =>
+const dbPath = (project: string, environment: string): string =>
   process.env.GSH_DB
-    ? path.join(process.cwd(), process.env.GSH_DB + project)
+    ? path.join(process.cwd(), process.env.GSH_DB + project + environment)
     : ":memory:";
 
-export const getDb = (project: string): sqlite3.Database => {
+export const getDb = (
+  project: string,
+  environment: string
+): sqlite3.Database => {
   if (dbMap.has(project)) {
     return dbMap.get(project)!;
   } else {
-    const db = new sqlite3.Database(dbPath(project));
+    const db = new sqlite3.Database(dbPath(project, environment));
 
     dbMap.set(project, db);
 
@@ -87,9 +90,7 @@ export const initDb = async (db: sqlite3.Database): Promise<void> => {
     `create table if not exists model (
     id text not null,
     alias text not null,
-    value_base text not null,
     inherits text not null,
-    usage text not null,
     primary key ( id )
   ) without rowid`
   );
@@ -112,7 +113,7 @@ export const initDb = async (db: sqlite3.Database): Promise<void> => {
     `create table if not exists entry (
     id text not null,
     model_id text not null,
-    value text not null,
+    value_id text not null,
     primary key ( id ),
     foreign key ( model_id ) references model ( id )
   ) without rowid`
@@ -139,6 +140,31 @@ export const initDb = async (db: sqlite3.Database): Promise<void> => {
     path text not null,
     type text not null,
     entry_id text,
+    primary key ( id )
+  ) without rowid`
+  );
+
+  await execAsync(
+    db,
+    `create table if not exists value (
+    id text not null,
+    model_id text not null references model ( id ),
+    primary key ( id )
+  ) without rowid`
+  );
+
+  await execAsync(
+    db,
+    `create table if not exists value_field (
+    id text not null,
+    value_id text not null references value ( id ),
+    model_field_id text not null references model_field ( id ),
+    index integer,
+    hint text,
+    value_scalar text,
+    value_media_id text references media ( id ),
+    value_entry_id text references entry ( id ),
+    value_value_id text references value ( id ),
     primary key ( id )
   ) without rowid`
   );
@@ -176,11 +202,11 @@ export const storeSync = async (
               const params: string[] = [
                 record.id,
                 record.payload.model_id,
-                JSON.stringify(record.payload.value),
+                record.payload.value_id
               ];
               await runAsync(
                 db,
-                `replace into entry ( id, model_id, value ) values ( ?, ?, ? )`,
+                `replace into entry ( id, model_id, value_id ) values ( ?, ?, ? )`,
                 params
               );
             }
@@ -200,13 +226,11 @@ export const storeSync = async (
               const params: string[] = [
                 record.id,
                 record.payload.alias,
-                JSON.stringify(record.payload.value_base) || "{}",
                 JSON.stringify(record.payload.inherits),
-                record.payload.usage,
               ];
               await runAsync(
                 db,
-                `replace into model ( id, alias, value_base, inherits, usage ) values ( ?, ?, ?, ?, ? )`,
+                `replace into model ( id, alias, inherits ) values ( ?, ?, ? )`,
                 params
               );
             }
@@ -297,6 +321,58 @@ export const storeSync = async (
           case "delete":
             {
               await runAsync(db, `delete from taxonomy where id = ?`, [
+                record.id,
+              ]);
+            }
+            break;
+        }
+        break;
+      case "value":
+        switch (record.action) {
+          case "create":
+          case "change":
+            {
+              const params: string[] = [record.id, record.payload.model_id];
+              await runAsync(
+                db,
+                `replace into value ( id, model_id ) values ( ?, ? )`,
+                params
+              );
+            }
+            break;
+          case "delete":
+            {
+              await runAsync(db, `delete from value where id = ?`, [record.id]);
+            }
+            break;
+        }
+        break;
+      case "value_field":
+        switch (record.action) {
+          case "create":
+          case "change":
+            {
+              const params: string[] = [
+                record.id,
+                record.payload.value_id,
+                record.payload.model_field_id,
+                record.payload.index,
+                record.payload.hint,
+                JSON.stringify(record.payload.value_scalar),
+                record.payload.value_media_id,
+                record.payload.value_entry_id,
+                record.payload.value_value_id,
+              ];
+              await runAsync(
+                db,
+                `replace into value_field ( id, value_id, model_field_id, index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+                params
+              );
+            }
+            break;
+          case "delete":
+            {
+              await runAsync(db, `delete from value_field where id = ?`, [
                 record.id,
               ]);
             }

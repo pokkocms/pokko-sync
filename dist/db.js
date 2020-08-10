@@ -16,15 +16,15 @@ exports.storeSync = exports.initDb = exports.getStamp = exports.getAsync = expor
 const sqlite3_1 = __importDefault(require("sqlite3"));
 const path_1 = __importDefault(require("path"));
 const dbMap = new Map();
-const dbPath = (project) => process.env.GSH_DB
-    ? path_1.default.join(process.cwd(), process.env.GSH_DB + project)
+const dbPath = (project, environment) => process.env.GSH_DB
+    ? path_1.default.join(process.cwd(), process.env.GSH_DB + project + environment)
     : ":memory:";
-exports.getDb = (project) => {
+exports.getDb = (project, environment) => {
     if (dbMap.has(project)) {
         return dbMap.get(project);
     }
     else {
-        const db = new sqlite3_1.default.Database(dbPath(project));
+        const db = new sqlite3_1.default.Database(dbPath(project, environment));
         dbMap.set(project, db);
         return db;
     }
@@ -75,9 +75,7 @@ exports.initDb = (db) => __awaiter(void 0, void 0, void 0, function* () {
     yield execAsync(db, `create table if not exists model (
     id text not null,
     alias text not null,
-    value_base text not null,
     inherits text not null,
-    usage text not null,
     primary key ( id )
   ) without rowid`);
     yield execAsync(db, `create table if not exists model_field (
@@ -92,7 +90,7 @@ exports.initDb = (db) => __awaiter(void 0, void 0, void 0, function* () {
     yield execAsync(db, `create table if not exists entry (
     id text not null,
     model_id text not null,
-    value text not null,
+    value_id text not null,
     primary key ( id ),
     foreign key ( model_id ) references model ( id )
   ) without rowid`);
@@ -111,6 +109,23 @@ exports.initDb = (db) => __awaiter(void 0, void 0, void 0, function* () {
     path text not null,
     type text not null,
     entry_id text,
+    primary key ( id )
+  ) without rowid`);
+    yield execAsync(db, `create table if not exists value (
+    id text not null,
+    model_id text not null references model ( id ),
+    primary key ( id )
+  ) without rowid`);
+    yield execAsync(db, `create table if not exists value_field (
+    id text not null,
+    value_id text not null references value ( id ),
+    model_field_id text not null references model_field ( id ),
+    index integer,
+    hint text,
+    value_scalar text,
+    value_media_id text references media ( id ),
+    value_entry_id text references entry ( id ),
+    value_value_id text references value ( id ),
     primary key ( id )
   ) without rowid`);
 });
@@ -137,9 +152,9 @@ exports.storeSync = (db, data) => __awaiter(void 0, void 0, void 0, function* ()
                             const params = [
                                 record.id,
                                 record.payload.model_id,
-                                JSON.stringify(record.payload.value),
+                                record.payload.value_id
                             ];
-                            yield runAsync(db, `replace into entry ( id, model_id, value ) values ( ?, ?, ? )`, params);
+                            yield runAsync(db, `replace into entry ( id, model_id, value_id ) values ( ?, ?, ? )`, params);
                         }
                         break;
                     case "delete":
@@ -157,11 +172,9 @@ exports.storeSync = (db, data) => __awaiter(void 0, void 0, void 0, function* ()
                             const params = [
                                 record.id,
                                 record.payload.alias,
-                                JSON.stringify(record.payload.value_base) || "{}",
                                 JSON.stringify(record.payload.inherits),
-                                record.payload.usage,
                             ];
-                            yield runAsync(db, `replace into model ( id, alias, value_base, inherits, usage ) values ( ?, ?, ?, ?, ? )`, params);
+                            yield runAsync(db, `replace into model ( id, alias, inherits ) values ( ?, ?, ? )`, params);
                         }
                         break;
                     case "delete":
@@ -238,6 +251,50 @@ exports.storeSync = (db, data) => __awaiter(void 0, void 0, void 0, function* ()
                     case "delete":
                         {
                             yield runAsync(db, `delete from taxonomy where id = ?`, [
+                                record.id,
+                            ]);
+                        }
+                        break;
+                }
+                break;
+            case "value":
+                switch (record.action) {
+                    case "create":
+                    case "change":
+                        {
+                            const params = [record.id, record.payload.model_id];
+                            yield runAsync(db, `replace into value ( id, model_id ) values ( ?, ? )`, params);
+                        }
+                        break;
+                    case "delete":
+                        {
+                            yield runAsync(db, `delete from value where id = ?`, [record.id]);
+                        }
+                        break;
+                }
+                break;
+            case "value_field":
+                switch (record.action) {
+                    case "create":
+                    case "change":
+                        {
+                            const params = [
+                                record.id,
+                                record.payload.value_id,
+                                record.payload.model_field_id,
+                                record.payload.index,
+                                record.payload.hint,
+                                JSON.stringify(record.payload.value_scalar),
+                                record.payload.value_media_id,
+                                record.payload.value_entry_id,
+                                record.payload.value_value_id,
+                            ];
+                            yield runAsync(db, `replace into value_field ( id, value_id, model_field_id, index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`, params);
+                        }
+                        break;
+                    case "delete":
+                        {
+                            yield runAsync(db, `delete from value_field where id = ?`, [
                                 record.id,
                             ]);
                         }

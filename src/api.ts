@@ -42,10 +42,14 @@ const loadPage = async (
   }
 };
 
-export const runSync = async (project: string, token: string) => {
-  const db = getDb(project);
+export const runSync = async (
+  project: string,
+  environment: string,
+  token: string
+) => {
+  const db = getDb(project, environment);
   await initDb(db);
-  const client = createClient(project, token);
+  const client = createClient(project, environment, token);
 
   const after = await getStamp(db);
 

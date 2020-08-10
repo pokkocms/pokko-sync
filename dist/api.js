@@ -46,10 +46,10 @@ const loadPage = (client, after, skip) => __awaiter(void 0, void 0, void 0, func
         return res.data.sync.nodes;
     }
 });
-exports.runSync = (project, token) => __awaiter(void 0, void 0, void 0, function* () {
-    const db = db_1.getDb(project);
+exports.runSync = (project, environment, token) => __awaiter(void 0, void 0, void 0, function* () {
+    const db = db_1.getDb(project, environment);
     yield db_1.initDb(db);
-    const client = client_1.createClient(project, token);
+    const client = client_1.createClient(project, environment, token);
     const after = yield db_1.getStamp(db);
     const res = yield loadPage(client, after, 0);
     yield db_1.storeSync(db, res);
