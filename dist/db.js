@@ -43,9 +43,9 @@ const runAsync = (db, sql, params) => __awaiter(void 0, void 0, void 0, function
         });
     });
 });
-exports.allAsync = (db, sql) => __awaiter(void 0, void 0, void 0, function* () {
+exports.allAsync = (db, sql, params) => __awaiter(void 0, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
-        db.all(sql, (err, res) => {
+        db.all(sql, params, (err, res) => {
             err ? reject(err) : resolve(res);
         });
     });
@@ -120,7 +120,7 @@ exports.initDb = (db) => __awaiter(void 0, void 0, void 0, function* () {
     id text not null,
     value_id text not null references value ( id ),
     model_field_id text not null references model_field ( id ),
-    index integer,
+    _index integer,
     hint text,
     value_scalar text,
     value_media_id text references media ( id ),
@@ -152,7 +152,7 @@ exports.storeSync = (db, data) => __awaiter(void 0, void 0, void 0, function* ()
                             const params = [
                                 record.id,
                                 record.payload.model_id,
-                                record.payload.value_id
+                                record.payload.value_id,
                             ];
                             yield runAsync(db, `replace into entry ( id, model_id, value_id ) values ( ?, ?, ? )`, params);
                         }
@@ -289,7 +289,7 @@ exports.storeSync = (db, data) => __awaiter(void 0, void 0, void 0, function* ()
                                 record.payload.value_entry_id,
                                 record.payload.value_value_id,
                             ];
-                            yield runAsync(db, `replace into value_field ( id, value_id, model_field_id, index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`, params);
+                            yield runAsync(db, `replace into value_field ( id, value_id, model_field_id, _index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`, params);
                         }
                         break;
                     case "delete":

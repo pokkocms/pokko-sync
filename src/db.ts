@@ -43,10 +43,11 @@ const runAsync = async (
 
 export const allAsync = async (
   db: sqlite3.Database,
-  sql: string
+  sql: string,
+  params?: any[]
 ): Promise<any[]> =>
   new Promise((resolve, reject) => {
-    db.all(sql, (err, res) => {
+    db.all(sql, params, (err, res) => {
       err ? reject(err) : resolve(res);
     });
   });
@@ -159,7 +160,7 @@ export const initDb = async (db: sqlite3.Database): Promise<void> => {
     id text not null,
     value_id text not null references value ( id ),
     model_field_id text not null references model_field ( id ),
-    index integer,
+    _index integer,
     hint text,
     value_scalar text,
     value_media_id text references media ( id ),
@@ -202,7 +203,7 @@ export const storeSync = async (
               const params: string[] = [
                 record.id,
                 record.payload.model_id,
-                record.payload.value_id
+                record.payload.value_id,
               ];
               await runAsync(
                 db,
@@ -365,7 +366,7 @@ export const storeSync = async (
               ];
               await runAsync(
                 db,
-                `replace into value_field ( id, value_id, model_field_id, index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+                `replace into value_field ( id, value_id, model_field_id, _index, hint, value_scalar, value_media_id, value_entry_id, value_value_id ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
                 params
               );
             }
