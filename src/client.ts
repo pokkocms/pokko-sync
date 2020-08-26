@@ -8,7 +8,7 @@ export const createClient = (
 ) =>
   new ApolloClient({
     link: new HttpLink({
-      uri: `https://hon.takeoffgo.com/${project}/${environment}/graphql`,
+      uri: `https://app.pokko.io/${project}/${environment}/graphql`,
       headers: {
         "X-Token": token,
       },

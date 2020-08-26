@@ -1,5 +1,5 @@
 {
-  "name": "honegumi-sync",
+  "name": "pokko-sync",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,10 +10,10 @@
   },
   "prepublish": "tsc",
   "repository": {
-    "url": "https://github.com/brendanmckenzie/honegumi-sync"
+    "url": "https://github.com/pokkocms/pokko-sync"
   },
   "bugs": {
-    "url": "https://github.com/brendanmckenzie/honegumi-sync/issues"
+    "url": "https://github.com/pokkocms/pokko-sync/issues"
   },
   "dependencies": {
     "@apollo/client": "^3.1.0",

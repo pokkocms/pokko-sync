@@ -8,7 +8,7 @@ const core_1 = require("@apollo/client/core");
 const cross_fetch_1 = __importDefault(require("cross-fetch"));
 exports.createClient = (project, environment, token) => new core_1.ApolloClient({
     link: new core_1.HttpLink({
-        uri: `https://hon.takeoffgo.com/${project}/${environment}/graphql`,
+        uri: `https://app.pokko.io/${project}/${environment}/graphql`,
         headers: {
             "X-Token": token,
         },
