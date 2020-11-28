@@ -4,6 +4,8 @@ import gql from "graphql-tag";
 import { initDb, getDb, getStamp, storeSync } from "./db";
 import { createClient } from "./client";
 
+export type Region = "au-syd1";
+
 const syncQuery = gql`
   query($after: String, $skip: Int!) {
     sync(skip: $skip, take: 500, filter: { after: $after }) {
@@ -43,13 +45,14 @@ const loadPage = async (
 };
 
 export const runSync = async (
+  region: Region,
   project: string,
   environment: string,
   token: string
 ) => {
   const db = getDb(project, environment);
   await initDb(db);
-  const client = createClient(project, environment, token);
+  const client = createClient(region, project, environment, token);
 
   const after = await getStamp(db);
 
