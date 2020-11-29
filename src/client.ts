@@ -7,14 +7,18 @@ export const createClient = (
   project: string,
   environment: string,
   token: string
-) =>
-  new ApolloClient({
+) => {
+  const uri = `https://${region}.pokko.io/${project}/${environment}/graphql`;
+  const headers = {
+    "X-Token": token,
+  };
+
+  return new ApolloClient({
     link: new HttpLink({
-      uri: `https://${region}.pokko.io/${project}/${environment}/graphql`,
-      headers: {
-        "X-Token": token,
-      },
+      uri,
+      headers,
       fetch,
     }),
     cache: new InMemoryCache(),
   });
+};

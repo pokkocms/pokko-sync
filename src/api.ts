@@ -30,17 +30,25 @@ const loadPage = async (
   after: string | null,
   skip: number
 ): Promise<any[]> => {
-  const res = await client.query({
-    query: syncQuery,
-    variables: { after, skip },
-  });
+  try {
+    const res = await client.query({
+      query: syncQuery,
+      variables: { after, skip },
+    });
 
-  if (res.data.sync.pageInfo.hasNextPage) {
-    return res.data.sync.nodes.concat(
-      await loadPage(client, after, skip + res.data.sync.nodes.length)
-    );
-  } else {
-    return res.data.sync.nodes;
+    if (res.data.sync.pageInfo.hasNextPage) {
+      return res.data.sync.nodes.concat(
+        await loadPage(client, after, skip + res.data.sync.nodes.length)
+      );
+    } else {
+      return res.data.sync.nodes;
+    }
+  } catch (ex) {
+    console.error("**** ERROR", ex, Object.keys(ex));
+    if (ex.networkError) {
+      console.error("**** RESULT", ex.networkError.result);
+    }
+    throw ex;
   }
 };
 
